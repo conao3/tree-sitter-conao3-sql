@@ -6,7 +6,7 @@
 //! ```
 //! let code = "";
 //! let mut parser = tree_sitter::Parser::new();
-//! parser.set_language(tree_sitter_sql::language()).expect("Error loading sql grammar");
+//! parser.set_language(&tree_sitter_sql::language()).expect("Error loading sql grammar");
 //! let tree = parser.parse(code, None).unwrap();
 //! ```
 //!
@@ -15,17 +15,22 @@
 //! [Parser]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Parser.html
 //! [tree-sitter]: https://tree-sitter.github.io/
 
-use tree_sitter::Language;
+use tree_sitter_language::LanguageFn;
 
 extern "C" {
-    fn tree_sitter_sql() -> Language;
+    fn tree_sitter_sql() -> *const ();
 }
+
+/// The tree-sitter [`LanguageFn`][LanguageFn] for this grammar.
+///
+/// [LanguageFn]: https://docs.rs/tree-sitter-language/*/tree_sitter_language/struct.LanguageFn.html
+pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_sql) };
 
 /// Get the tree-sitter [Language][] for this grammar.
 ///
 /// [Language]: https://docs.rs/tree-sitter/*/tree_sitter/struct.Language.html
-pub fn language() -> Language {
-    unsafe { tree_sitter_sql() }
+pub fn language() -> tree_sitter::Language {
+    LANGUAGE.into()
 }
 
 /// The content of the [`node-types.json`][] file for this grammar.
@@ -46,7 +51,7 @@ mod tests {
     fn test_can_load_grammar() {
         let mut parser = tree_sitter::Parser::new();
         parser
-            .set_language(super::language())
+            .set_language(&super::language())
             .expect("Error loading sql language");
     }
 }
